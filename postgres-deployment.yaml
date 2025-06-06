@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: znav-postgres
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: znav-postgres
+  template:
+    metadata:
+      labels:
+        app: znav-postgres
+    spec:
+      containers:
+        - name: znav-postgres
+          image: postgres:16
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "znav"
+            - name: TZ
+              value: "Asia/Shanghai"
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /docker-entrypoint-initdb.d
+              name: postgres-initdb
+      volumes:
+        - name: postgres-initdb
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: znav-postgres
+  namespace: production
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: znav-postgres
