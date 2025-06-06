@@ -1,29 +1,14 @@
-# 使用 Go 官方镜像作为基础镜像
-FROM golang:1.20-alpine
+# Build stage
+FROM ghcr.io/graalvm/native-image:21 AS build
+WORKDIR /workspace
+COPY spring-backend/pom.xml spring-backend/
+COPY spring-backend/src spring-backend/src
+WORKDIR /workspace/spring-backend
+RUN mvn -Pnative -DskipTests package
 
-# 设置工作目录
+# Runtime stage
+FROM alpine:3.19
 WORKDIR /app
-
-# 设置 Go Modules 代理，避免网络问题
-ENV GOPROXY=https://goproxy.cn,direct
-
-# 将当前目录的所有文件复制到容器中
-COPY . .
-
-# 复制 .env 文件到容器中
-COPY ./backend/.env .env
-
-# 进入 backend 目录，并下载安装 Go module 依赖
-WORKDIR /app/backend
-
-# 下载安装 Go module 依赖
-RUN go mod tidy
-
-# 编译 Go 应用为二进制文件
-RUN go build -o main .
-
-# 暴露服务端口（假设 Go 服务运行在 8080 端口）
+COPY --from=build /workspace/spring-backend/target/nav-backend /app/nav-backend
 EXPOSE 8080
-
-# 设置启动命令
-CMD ["./main"]
+CMD ["./nav-backend"]

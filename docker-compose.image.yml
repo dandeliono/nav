@@ -4,18 +4,18 @@ services:
     image: registry.cn-shanghai.aliyuncs.com/hooz/nav:backend
     container_name: znav-backend
     environment:
-      - DB_USER=root       # 数据库用户
-      - DB_PASSWORD=123456 # 数据库密码
-      - DB_HOST=mysql  # 数据库容器
-      - DB_PORT=3306   # 数据库端口
-      - DB_NAME=znav   # zanv数据库
+      - DB_USER=postgres       # 数据库用户
+      - DB_PASSWORD=postgres   # 数据库密码
+      - DB_HOST=postgres  # 数据库容器
+      - DB_PORT=5432     # 数据库端口
+      - DB_NAME=znav     # znav数据库
       - JWT_SECRET=supersecret
     ports:
       - "8080:8080"  # 暴露后端的 8080 端口
     networks:
       - znav_network
     depends_on:
-      - mysql  # 等待 MySQL 启动
+      - postgres  # 等待 PostgreSQL 启动
     restart: always
 
   frontend:
@@ -29,21 +29,21 @@ services:
       - znav_network
     restart: always
 
-  mysql:
-    image: mysql:8.4.0-oraclelinux8
-    container_name: znav-mysql
+  postgres:
+    image: postgres:16
+    container_name: znav-postgres
     environment:
-      - MYSQL_ROOT_PASSWORD=123456
-      - MYSQL_DATABASE=znav
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=znav
       - TZ=Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
       - ./initdb:/docker-entrypoint-initdb.d
     networks:
       - znav_network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       retries: 3
     restart: always
